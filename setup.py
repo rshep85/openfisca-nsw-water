@@ -8,7 +8,7 @@ setup(
     long_description_content_type="text/markdown",
     author="NSW Water Team",
     license="AGPL-3.0",
-    url="https://github.com/rshep85/openfisca-nsw-water",
+    url="https://github.com/your-org/openfisca-nsw-water",
     packages=find_packages(),
     install_requires=[
         "openfisca-nsw-base >= 0.4.0",

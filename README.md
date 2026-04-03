@@ -1,113 +1,115 @@
-# OpenFisca NSW Water
+# NSW Water · Rules as Code — Complete Package
 
-An [OpenFisca](https://openfisca.org) package encoding NSW water management rules as code.
-
-Builds on the [`openfisca-nsw-base`](https://github.com/Openfisca-NSW/openfisca_nsw_base) package established by the NSW Government Rules-as-Code programme.
-
----
-
-## Legislation Encoded
-
-| Module | Legislation | Rules encoded |
-|---|---|---|
-| `metering.py` | Water Management Act 2000 s.91I; Water Management (General) Regulation 2018 cl.174–180; NSW Metering Policy 2019 | Is metering required? Is telemetry required? What is the compliance deadline? |
-| `controlled_activity.py` | Water Management Act 2000 s.91; WM(G) Regulation 2018 Schedule 3 | Is the activity on waterfront land? Does an exemption apply? Is a CAA required? |
-| `harvestable_rights.py` | Water Management Act 2000 s.52; WM(G) Regulation 2018 cl.43–48 | Maximum dam capacity (ML); Remaining capacity; Regulated river restrictions |
+This repository contains everything produced as part of the NSW Water Rules as Code initiative:
+a working OpenFisca rules model, two interactive demo applications, and the supporting strategic documents.
 
 ---
 
-## Package Structure
+## What's in here
 
 ```
-openfisca_nsw_water/
-├── __init__.py
-├── entities.py                    # Person, LandHolding, WaterLicence, ControlledActivityApplication
-└── variables/
-    ├── metering.py                # Metering compliance rules
-    ├── controlled_activity.py     # CAA eligibility and exemptions
-    └── harvestable_rights.py      # Dam capacity formula
-
-tests/
-└── test_water_rules.yaml          # YAML tests for all three modules
-
-setup.py
-README.md
+openfisca_nsw_water/        ← Phase 1: OpenFisca rules engine (Python package)
+demo_apps/                  ← Interactive HTML demos (open in any browser)
+documents/                  ← Strategic brief and personal note (Word docs)
 ```
 
 ---
 
-## Install
+## Phase 1 — OpenFisca NSW Water Rules Engine
+
+A Python package that encodes NSW water management legislation as executable rules.
+
+**Legislation encoded:**
+- Water Management Act 2000 (s.52, s.91, s.91A, s.91I)
+- Water Management (General) Regulation 2018 (cl.43–48, cl.174–180, Schedule 3)
+- NSW Non-Urban Water Metering Policy 2019 (Appendix A — phased deadlines)
+
+**Three rule modules:**
+
+| Module | What it calculates |
+|---|---|
+| `metering.py` | Is a meter required? Telemetry? What deadline? |
+| `controlled_activity.py` | Is a CAA required? Does an exemption apply? |
+| `harvestable_rights.py` | Maximum dam capacity (ML) under harvestable rights |
+
+**Quick start:**
+```bash
+cd openfisca_nsw_water
+python3 -m venv .venv && source .venv/bin/activate
+make install
+make test
+make serve          # API live at http://localhost:5000
+make example-metering   # test a real API call
+```
+
+**Builds on:** [openfisca-nsw-base](https://github.com/Openfisca-NSW/openfisca_nsw_base) — the NSW Government's existing OpenFisca base package (shared entities, available on PyPI).
+
+---
+
+## Phase 2 — Demo Applications
+
+Open either HTML file directly in a browser — no server required.
+
+### `01_phase1_rac_executive_demo.html`
+Three-lens executive demonstration of the Rules as Code platform:
+- **Water User lens** — four guided compliance tools (metering, CAA, dam calculator, navigator)
+- **NRAR Regulator lens** — automated monitoring dashboard, breach flagging, regional compliance
+- **Policy Simulation lens** — adjust rule parameters and see population-wide impact
+
+### `02_phase2_compliance_register_tiered_attestation.html`
+Compliance Obligation Register with honest tiered attestation:
+- Obligations register with Tier 1/2/3 integrity classification per obligation
+- Live compliance calendar
+- Upload and extract obligations from licence documents (simulated)
+- Change detection — what changed when a licence is amended
+- NRAR regulator dashboard showing entity integrity scores
+- Entity switcher: water/floodplain harvesting/supplementary licence types
+
+**The handoff between Phase 1 and Phase 2** is demonstrated — a metering compliance result from the RaC tool appears pre-populated in the obligation register.
+
+---
+
+## Documents
+
+| File | Purpose |
+|---|---|
+| `NRAR_RaC_Strategic_Brief.docx` | Strategic initiative brief for the Chief Regulatory Officer |
+| `NRAR_CRO_Personal_Note.docx` | Personal follow-up note re: EO14/15 role, tenure, review point |
+
+---
+
+## GitHub setup (your own repo)
+
+This package is designed to live in your own GitHub account — not the NSW Government Openfisca-NSW org.
 
 ```bash
-python -m venv water
-source water/bin/activate
-pip install -e .
+# 1. Create a new repo on github.com
+#    Suggested name: openfisca-nsw-water
+#    Visibility: Public (required for AGPL-3.0 compliance if you serve the API)
+#    Licence: AGPL-3.0 (select when creating)
+
+# 2. Clone it locally
+git clone https://github.com/YOUR-USERNAME/openfisca-nsw-water.git
+cd openfisca-nsw-water
+
+# 3. Copy the openfisca_nsw_water/ folder contents in
+#    (everything inside openfisca_nsw_water/ goes to the repo root)
+
+# 4. Update setup.py — change the url field:
+#    url="https://github.com/YOUR-USERNAME/openfisca-nsw-water"
+
+# 5. Push
+git add .
+git commit -m "Initial NSW water rules package — metering, CAA, harvestable rights"
+git push
 ```
 
-## Run Tests
-
-```bash
-openfisca test tests/ --country-package openfisca_nsw_water
-```
-
-## Serve the API
-
-```bash
-openfisca serve --country-package openfisca_nsw_water --port 5000
-```
-
-Then call it:
-
-```bash
-curl -X POST http://localhost:5000/calculate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "water_licences": {
-      "my_licence": {
-        "licence_type": { "ETERNITY": "surface_water" },
-        "pump_diameter_category": { "ETERNITY": "large" },
-        "water_region": { "ETERNITY": "murray_darling_regulated" },
-        "current_meter_status": { "ETERNITY": "none" },
-        "metering_required": { "2024": null },
-        "compliance_deadline_year": { "2024": null },
-        "telemetry_required": { "2024": null }
-      }
-    },
-    "persons": {}
-  }'
-```
-
-Expected response:
-```json
-{
-  "water_licences": {
-    "my_licence": {
-      "metering_required": { "2024": true },
-      "compliance_deadline_year": { "2024": 2024 },
-      "telemetry_required": { "2024": true }
-    }
-  }
-}
-```
+The demo apps and documents are separate from the GitHub package — keep them locally or in a private repo.
 
 ---
-
-## Contributing
-
-To add new rules (e.g. water restriction checks, entitlement calculators):
-
-1. Add a new `.py` file under `variables/`
-2. Define input variables (facts about the situation)
-3. Define calculated variables with `formula()` methods that encode the legal logic
-4. Add YAML tests to `tests/`
-5. Run `openfisca test` to verify
-
----
-
-## Credits
-
-Computations powered by [OpenFisca](https://openfisca.org), the free and open-source social and fiscal computation engine. Source code available at [github.com/openfisca](https://github.com/openfisca). Licensed AGPL-3.0.
 
 ## Licence
 
-AGPL-3.0 — as required by OpenFisca-Core.
+AGPL-3.0 — as required by OpenFisca-Core. If you serve the API publicly, the source code must be publicly accessible. This is already satisfied by having the repo public on GitHub.
+
+> Computations powered by [OpenFisca](https://openfisca.org) — the free and open-source rules as code engine.
