@@ -1,0 +1,345 @@
+# =============================================================================
+# NSW Water OpenFisca Package — YAML Tests
+#
+# These tests verify that the encoded rules produce the correct outcomes
+# for known scenarios. Each test describes a situation and asserts the
+# expected output variable values.
+#
+# Run with:  make test
+#            or: openfisca test tests/ --country-package openfisca_nsw_water
+#
+# Reference: OpenFisca documentation — Writing YAML tests
+# =============================================================================
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# METERING TESTS
+# Reference: Water Management Act 2000 s.91I;
+#            Water Management (General) Regulation 2018 cl. 174-176
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: >
+    Metering — Large pump on Murray-Darling regulated river, no meter installed.
+    Must install pattern-approved meter with telemetry by 2024.
+  period: 2024
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_category: large
+        water_region: murray_darling_regulated
+        current_meter_status: none
+  output:
+    water_licences:
+      licence_holder_1:
+        metering_required: true
+        telemetry_required: true
+        compliance_deadline_year: 2024
+        metering_compliance_status: "action_required"
+
+- name: >
+    Metering — Pattern-approved meter already installed.
+    Should be compliant regardless of pump size or region.
+  period: 2024
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_category: large
+        water_region: murray_darling_regulated
+        current_meter_status: pattern_approved
+  output:
+    water_licences:
+      licence_holder_1:
+        metering_required: false
+        metering_compliance_status: "compliant"
+
+- name: >
+    Metering — Small pump (under 100mm) on coastal catchment.
+    Below threshold — metering not required.
+  period: 2024
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_category: small
+        water_region: coastal
+        current_meter_status: none
+  output:
+    water_licences:
+      licence_holder_1:
+        metering_required: false
+        metering_compliance_status: "not_applicable"
+
+- name: >
+    Metering — No water access licence held.
+    Metering rules do not apply.
+  period: 2024
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: none
+        pump_diameter_category: medium
+        water_region: coastal
+        current_meter_status: none
+  output:
+    water_licences:
+      licence_holder_1:
+        metering_required: false
+        metering_compliance_status: "not_applicable"
+
+- name: >
+    Metering — Inland unregulated river, medium pump, old non-approved meter.
+    Must upgrade meter by 2026.
+  period: 2024
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_category: medium
+        water_region: inland_unregulated
+        current_meter_status: non_approved
+  output:
+    water_licences:
+      licence_holder_1:
+        metering_required: true
+        telemetry_required: false
+        compliance_deadline_year: 2026
+        metering_compliance_status: "upgrade_required"
+
+- name: >
+    Metering — Large pump on MDB groundwater, no meter.
+    Requires meter AND telemetry by 2025.
+  period: 2024
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: groundwater
+        pump_diameter_category: large
+        water_region: groundwater_mdb
+        current_meter_status: none
+  output:
+    water_licences:
+      licence_holder_1:
+        metering_required: true
+        telemetry_required: true
+        compliance_deadline_year: 2025
+        metering_compliance_status: "action_required"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CONTROLLED ACTIVITY TESTS
+# Reference: Water Management Act 2000 s.91;
+#            Water Management (General) Regulation 2018 Schedule 3
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: >
+    CAA — Structure proposed within 40m of a river, no exemption applies.
+    CAA is required.
+  period: 2024
+  input:
+    controlled_activity_applications:
+      application_1:
+        activity_location: within_40m_river
+        activity_type: erect_structure
+        special_circumstance: none
+        activity_purpose: agricultural
+  output:
+    controlled_activity_applications:
+      application_1:
+        is_on_waterfront_land: true
+        caa_exemption_applies: false
+        caa_required: true
+        caa_outcome_code: "caa_required"
+
+- name: >
+    CAA — Activity located more than 40m from any waterway.
+    Not waterfront land — no CAA required.
+  period: 2024
+  input:
+    controlled_activity_applications:
+      application_1:
+        activity_location: outside_waterfront
+        activity_type: erect_structure
+        special_circumstance: none
+        activity_purpose: residential
+  output:
+    controlled_activity_applications:
+      application_1:
+        is_on_waterfront_land: false
+        caa_exemption_applies: true
+        caa_required: false
+        caa_outcome_code: "not_waterfront"
+
+- name: >
+    CAA — Emergency flood repair on waterfront land.
+    Emergency exemption applies — no CAA required (but notify NRAR within 7 days).
+  period: 2024
+  input:
+    controlled_activity_applications:
+      application_1:
+        activity_location: within_40m_river
+        activity_type: maintenance
+        special_circumstance: emergency
+        activity_purpose: agricultural
+  output:
+    controlled_activity_applications:
+      application_1:
+        is_on_waterfront_land: true
+        emergency_exemption_applies: true
+        caa_exemption_applies: true
+        caa_required: false
+        caa_outcome_code: "emergency_exempt"
+
+- name: >
+    CAA — Routine maintenance of existing lawfully approved structure.
+    Maintenance exemption applies — no CAA required.
+  period: 2024
+  input:
+    controlled_activity_applications:
+      application_1:
+        activity_location: within_40m_river
+        activity_type: maintenance
+        special_circumstance: none
+        activity_purpose: agricultural
+  output:
+    controlled_activity_applications:
+      application_1:
+        maintenance_exemption_applies: true
+        caa_exemption_applies: true
+        caa_required: false
+        caa_outcome_code: "maintenance_exempt"
+
+- name: >
+    CAA — Location unknown. Conservative result — CAA flagged as required
+    until distance from waterway is confirmed.
+  period: 2024
+  input:
+    controlled_activity_applications:
+      application_1:
+        activity_location: unknown
+        activity_type: fill_excavate
+        special_circumstance: none
+        activity_purpose: commercial
+  output:
+    controlled_activity_applications:
+      application_1:
+        is_on_waterfront_land: true
+        caa_required: true
+        caa_outcome_code: "location_unknown"
+
+- name: >
+    CAA — Vegetation clearing within 40m of estuary, not emergency.
+    CAA required.
+  period: 2024
+  input:
+    controlled_activity_applications:
+      application_1:
+        activity_location: within_40m_estuary
+        activity_type: vegetation_clearing
+        special_circumstance: none
+        activity_purpose: commercial
+  output:
+    controlled_activity_applications:
+      application_1:
+        is_on_waterfront_land: true
+        caa_exemption_applies: false
+        caa_required: true
+        caa_outcome_code: "caa_required"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HARVESTABLE RIGHTS TESTS
+# Reference: Water Management Act 2000 s.52;
+#            Water Management (General) Regulation 2018 cl. 43-48
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: >
+    Harvestable rights — 100 hectare property in medium rainfall zone (600-800mm).
+    No existing dams. Expected capacity: 100 × 5.0 = 500.0 ML
+  period: 2024
+  input:
+    land_holdings:
+      holding_1:
+        land_area_hectares: 100
+        rainfall_zone: medium
+        catchment_type: unregulated
+        existing_dam_volume_ml: 0
+  output:
+    land_holdings:
+      holding_1:
+        harvestable_rights_factor: 5.0
+        maximum_harvestable_dam_capacity_ml: 500.0
+        remaining_dam_capacity_ml: 500.0
+        regulated_river_restriction_applies: false
+
+- name: >
+    Harvestable rights — 63.26 hectare property in low rainfall zone (400-600mm).
+    No existing dams. Expected: 63.26 × 3.5 = 221.41 ML
+  period: 2024
+  input:
+    land_holdings:
+      holding_1:
+        land_area_hectares: 63.26
+        rainfall_zone: low
+        catchment_type: unregulated
+        existing_dam_volume_ml: 0
+  output:
+    land_holdings:
+      holding_1:
+        harvestable_rights_factor: 3.5
+        maximum_harvestable_dam_capacity_ml: 221.41
+        remaining_dam_capacity_ml: 221.41
+
+- name: >
+    Harvestable rights — 200 hectare property in high rainfall zone (800-1000mm).
+    Existing dams total 150 ML. Remaining: (200 × 6.2) - 150 = 1090.0 ML
+  period: 2024
+  input:
+    land_holdings:
+      holding_1:
+        land_area_hectares: 200
+        rainfall_zone: high
+        catchment_type: unregulated
+        existing_dam_volume_ml: 150
+  output:
+    land_holdings:
+      holding_1:
+        harvestable_rights_factor: 6.2
+        maximum_harvestable_dam_capacity_ml: 1240.0
+        remaining_dam_capacity_ml: 1090.0
+
+- name: >
+    Harvestable rights — Property within 3km of a regulated river.
+    Additional restrictions flag should be raised.
+  period: 2024
+  input:
+    land_holdings:
+      holding_1:
+        land_area_hectares: 150
+        rainfall_zone: medium
+        catchment_type: within_3km_regulated
+        existing_dam_volume_ml: 0
+  output:
+    land_holdings:
+      holding_1:
+        maximum_harvestable_dam_capacity_ml: 750.0
+        regulated_river_restriction_applies: true
+
+- name: >
+    Harvestable rights — Very high rainfall zone (>1000mm), 50 hectares.
+    Expected: 50 × 7.2 = 360.0 ML
+  period: 2024
+  input:
+    land_holdings:
+      holding_1:
+        land_area_hectares: 50
+        rainfall_zone: very_high
+        catchment_type: unregulated
+        existing_dam_volume_ml: 0
+  output:
+    land_holdings:
+      holding_1:
+        harvestable_rights_factor: 7.2
+        maximum_harvestable_dam_capacity_ml: 360.0
+        remaining_dam_capacity_ml: 360.0
