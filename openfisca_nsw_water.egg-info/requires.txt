@@ -1,0 +1,8 @@
+openfisca-nsw-base>=0.4.0
+openfisca-core<36.0.0,>=35.0.0
+
+[dev]
+flake8>=6.0
+bump2version>=1.0
+build>=1.0
+twine>=4.0

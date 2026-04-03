@@ -1,0 +1,2 @@
+[openfisca.country_package]
+openfisca_nsw_water = openfisca_nsw_water
