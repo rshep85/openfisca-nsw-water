@@ -2,23 +2,23 @@
 # OpenFisca NSW Water — Makefile
 #
 # Usage:
-#   make install       Install package and dependencies
-#   make test          Run all YAML tests
-#   make serve         Serve the OpenFisca Web API locally (port 5000)
-#   make build         Build distribution package
-#   make upload        Upload to PyPI
-#   make lint          Lint Python files
-#   make clean         Remove build artifacts
+#   make install        Install package and dependencies
+#   make test           Run all YAML tests
+#   make serve          Serve the OpenFisca Web API locally (port 5000)
+#   make build          Build distribution package
+#   make upload         Upload to PyPI
+#   make lint           Lint Python files
+#   make clean          Remove build artifacts
 #
 # Prerequisites: Python 3.7+, pip, virtualenv
 # =============================================================================
 
-PACKAGE     = openfisca_nsw_water
-PORT        = 5000
-PYTHON      = python3
-PIP         = pip
-VENV        = .venv
-VENV_BIN    = $(VENV)/bin
+PACKAGE    = openfisca_nsw_water
+PORT       = 5000
+PYTHON     = python3
+PIP        = pip
+VENV       = .venv
+VENV_BIN   = $(VENV)/bin
 
 # ── Colours for output ──────────────────────────────────────────────────────
 RESET  = \033[0m
@@ -92,9 +92,9 @@ test-file:
 .PHONY: serve
 serve:
 	@echo "$(CYAN)→ Serving OpenFisca Web API on http://localhost:$(PORT)$(RESET)"
-	@echo "$(YELLOW)  Swagger docs: http://localhost:$(PORT)/spec$(RESET)"
-	@echo "$(YELLOW)  Calculate:    POST http://localhost:$(PORT)/calculate$(RESET)"
-	@echo "$(YELLOW)  Variables:    GET  http://localhost:$(PORT)/variables$(RESET)"
+	@echo "$(YELLOW)  Swagger docs:  http://localhost:$(PORT)/spec$(RESET)"
+	@echo "$(YELLOW)  Calculate:     POST http://localhost:$(PORT)/calculate$(RESET)"
+	@echo "$(YELLOW)  Variables:     GET  http://localhost:$(PORT)/variables$(RESET)"
 	@echo ""
 	openfisca serve \
 		--country-package $(PACKAGE) \
@@ -114,66 +114,75 @@ serve-dev:
 # ── Example API calls ─────────────────────────────────────────────────────────
 # Run these after `make serve` in another terminal.
 
+# Updated for Water Management (General) Regulation 2025 dual-axis framework.
+# Inputs: pump_diameter_mm + cumulative_entitlement_ml (replaces pump_diameter_category).
+# This example: 300mm pump, 150ML entitlement, inland regulated → Tier 3, action_required.
 .PHONY: example-metering
 example-metering:
-	@echo "$(CYAN)→ Example: metering_required calculation$(RESET)"
+	@echo "$(CYAN)→ Example: metering compliance (Reg 2025 dual-axis)$(RESET)"
 	curl -s -X POST http://localhost:$(PORT)/calculate \
-	  -H "Content-Type: application/json" \
-	  -d '{ \
-	    "water_licences": { \
-	      "my_licence": { \
-	        "licence_type":           { "ETERNITY": "surface_water" }, \
-	        "pump_diameter_category": { "ETERNITY": "large" }, \
-	        "water_region":           { "ETERNITY": "murray_darling_regulated" }, \
-	        "current_meter_status":   { "ETERNITY": "none" }, \
-	        "metering_required":         { "2025": null }, \
-	        "telemetry_required":         { "2025": null }, \
-	        "compliance_deadline_year":  { "2025": null }, \
-	        "metering_compliance_status":{ "2025": null } \
-	      } \
-	    }, \
-	    "persons": {} \
-	  }' | python3 -m json.tool
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"water_licences": { \
+				"my_licence": { \
+					"licence_type":               { "ETERNITY": "surface_water" }, \
+					"pump_diameter_mm":            { "ETERNITY": 300.0 }, \
+					"cumulative_entitlement_ml":   { "ETERNITY": 150.0 }, \
+					"water_region":                { "ETERNITY": "inland_regulated" }, \
+					"current_meter_status":        { "ETERNITY": "none" }, \
+					"work_status":                 { "ETERNITY": "active" }, \
+					"is_single_work_on_property":  { "ETERNITY": true }, \
+					"is_trading_allocations":      { "2025": false }, \
+					"compliance_tier":             { "2025": null }, \
+					"metering_required":           { "2025": null }, \
+					"telemetry_required":          { "2025": null }, \
+					"dqp_validation_required":     { "2025": null }, \
+					"compliance_deadline_year":    { "2025": null }, \
+					"metering_compliance_status":  { "2025": null } \
+				} \
+			}, \
+			"persons": {} \
+		}' | python3 -m json.tool
 
 .PHONY: example-dam
 example-dam:
 	@echo "$(CYAN)→ Example: harvestable rights dam capacity$(RESET)"
 	curl -s -X POST http://localhost:$(PORT)/calculate \
-	  -H "Content-Type: application/json" \
-	  -d '{ \
-	    "land_holdings": { \
-	      "my_property": { \
-	        "land_area_hectares":  { "ETERNITY": 150 }, \
-	        "rainfall_zone":       { "ETERNITY": "medium" }, \
-	        "catchment_type":      { "ETERNITY": "unregulated" }, \
-	        "existing_dam_volume_ml": { "ETERNITY": 0 }, \
-	        "maximum_harvestable_dam_capacity_ml": { "2025": null }, \
-	        "remaining_dam_capacity_ml":           { "2025": null }, \
-	        "harvestable_rights_factor":           { "2025": null } \
-	      } \
-	    }, \
-	    "persons": {} \
-	  }' | python3 -m json.tool
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"land_holdings": { \
+				"my_property": { \
+					"land_area_hectares":              { "ETERNITY": 150 }, \
+					"rainfall_zone":                   { "ETERNITY": "medium" }, \
+					"catchment_type":                  { "ETERNITY": "unregulated" }, \
+					"existing_dam_volume_ml":          { "ETERNITY": 0 }, \
+					"maximum_harvestable_dam_capacity_ml": { "2025": null }, \
+					"remaining_dam_capacity_ml":       { "2025": null }, \
+					"harvestable_rights_factor":       { "2025": null } \
+				} \
+			}, \
+			"persons": {} \
+		}' | python3 -m json.tool
 
 .PHONY: example-caa
 example-caa:
 	@echo "$(CYAN)→ Example: controlled activity approval check$(RESET)"
 	curl -s -X POST http://localhost:$(PORT)/calculate \
-	  -H "Content-Type: application/json" \
-	  -d '{ \
-	    "controlled_activity_applications": { \
-	      "my_application": { \
-	        "activity_location":  { "ETERNITY": "within_40m_river" }, \
-	        "activity_type":      { "ETERNITY": "erect_structure" }, \
-	        "special_circumstance": { "ETERNITY": "none" }, \
-	        "activity_purpose":   { "ETERNITY": "agricultural" }, \
-	        "caa_required":       { "2025": null }, \
-	        "caa_outcome_code":   { "2025": null }, \
-	        "caa_exemption_applies": { "2025": null } \
-	      } \
-	    }, \
-	    "persons": {} \
-	  }' | python3 -m json.tool
+		-H "Content-Type: application/json" \
+		-d '{ \
+			"controlled_activity_applications": { \
+				"my_application": { \
+					"activity_location":      { "ETERNITY": "within_40m_river" }, \
+					"activity_type":          { "ETERNITY": "erect_structure" }, \
+					"special_circumstance":   { "ETERNITY": "none" }, \
+					"activity_purpose":       { "ETERNITY": "agricultural" }, \
+					"caa_required":           { "2025": null }, \
+					"caa_outcome_code":       { "2025": null }, \
+					"caa_exemption_applies":  { "2025": null } \
+				} \
+			}, \
+			"persons": {} \
+		}' | python3 -m json.tool
 
 # ── Lint ──────────────────────────────────────────────────────────────────────
 .PHONY: lint
@@ -224,7 +233,6 @@ clean:
 # Usage: make bump-patch  (0.1.0 → 0.1.1)
 #        make bump-minor  (0.1.0 → 0.2.0)
 #        make bump-major  (0.1.0 → 1.0.0)
-
 .PHONY: bump-patch bump-minor bump-major
 bump-patch:
 	@echo "$(CYAN)→ Bumping patch version...$(RESET)"

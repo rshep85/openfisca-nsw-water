@@ -2,13 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name="openfisca-nsw-water",
-    version="0.1.0",
+    version="0.2.0",
     description="OpenFisca package encoding NSW water management rules",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="NSW Water Team",
     license="AGPL-3.0",
-    url="https://github.com/your-org/openfisca-nsw-water",
+    url="https://github.com/rshep85/openfisca-nsw-water",
     packages=find_packages(),
     install_requires=[
         "openfisca-nsw-base >= 0.4.0",
