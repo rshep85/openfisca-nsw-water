@@ -14,117 +14,333 @@
 
 # ─────────────────────────────────────────────────────────────────────────────
 # METERING TESTS
-# Reference: Water Management Act 2000 s.91I;
-#            Water Management (General) Regulation 2018 cl. 174-176
+# Reference: Water Management Act 2000 s.101A;
+#            Water Management (General) Regulation 2025, Part 5 (cl. 66-116)
+#            Water Management (General) Regulation 2025, Schedule 7
+#
+# The 2025 Regulation introduced a dual-axis framework. Obligations are
+# determined by BOTH cumulative entitlement (ML) AND pump/bore diameter (mm).
+#
+# Tier 3 (full compliance — AS4747 meter + DQP + LID + telemetry):
+#   - Surface water pump ≥500mm (anywhere in NSW), OR
+#   - Cumulative entitlement ≥100ML
+#
+# Tier 2 (meter only — DQP and telemetry optional):
+#   - Cumulative entitlement >15ML and <100ML
+#
+# Exempt (no meter required):
+#   - Single surface water pump <100mm AND entitlement ≤15ML, OR
+#   - Single groundwater bore <200mm AND entitlement ≤15ML
+#   - Note: trading allocations overrides the ≤15ML exemption
+#
+# Not applicable:
+#   - No water access licence, OR
+#   - Work is inactive or unintended
 # ─────────────────────────────────────────────────────────────────────────────
 
 - name: >
-    Metering — Large pump on Murray-Darling regulated river, no meter installed.
-    Must install pattern-approved meter with telemetry by 2024.
-  period: 2024
+    Metering — Tier 3 (inland). Large inland pump (300mm), 250ML entitlement.
+    Requires full compliance: AS4747 meter + DQP + LID/telemetry.
+    Inland deadline already passed — compliance required now (2024).
+  period: 2025
   input:
     water_licences:
       licence_holder_1:
         licence_type: surface_water
-        pump_diameter_category: large
-        water_region: murray_darling_regulated
+        pump_diameter_mm: 300.0
+        cumulative_entitlement_ml: 250.0
+        water_region: inland_regulated
         current_meter_status: none
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
   output:
     water_licences:
       licence_holder_1:
+        compliance_tier: tier_3_full_compliance
         metering_required: true
         telemetry_required: true
+        dqp_validation_required: true
         compliance_deadline_year: 2024
         metering_compliance_status: "action_required"
 
 - name: >
-    Metering — Pattern-approved meter already installed.
-    Should be compliant regardless of pump size or region.
-  period: 2024
+    Metering — Tier 3 (inland), pattern-approved meter WITH LID already installed.
+    Should be fully compliant.
+  period: 2025
   input:
     water_licences:
       licence_holder_1:
         licence_type: surface_water
-        pump_diameter_category: large
-        water_region: murray_darling_regulated
-        current_meter_status: pattern_approved
+        pump_diameter_mm: 300.0
+        cumulative_entitlement_ml: 250.0
+        water_region: inland_regulated
+        current_meter_status: pattern_approved_with_lid
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
   output:
     water_licences:
       licence_holder_1:
-        metering_required: false
+        compliance_tier: tier_3_full_compliance
+        metering_required: true
+        telemetry_required: true
+        dqp_validation_required: true
+        compliance_deadline_year: 2024
         metering_compliance_status: "compliant"
 
 - name: >
-    Metering — Small pump (under 100mm) on coastal catchment.
-    Below threshold — metering not required.
-  period: 2024
+    Metering — Tier 3 (inland), pattern-approved meter installed but NO LID.
+    Meter is present but telemetry gap means not fully compliant.
+    Status: lid_required.
+  period: 2025
   input:
     water_licences:
       licence_holder_1:
         licence_type: surface_water
-        pump_diameter_category: small
-        water_region: coastal
-        current_meter_status: none
+        pump_diameter_mm: 300.0
+        cumulative_entitlement_ml: 120.0
+        water_region: inland_regulated
+        current_meter_status: pattern_approved_no_lid
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
   output:
     water_licences:
       licence_holder_1:
-        metering_required: false
-        metering_compliance_status: "not_applicable"
-
-- name: >
-    Metering — No water access licence held.
-    Metering rules do not apply.
-  period: 2024
-  input:
-    water_licences:
-      licence_holder_1:
-        licence_type: none
-        pump_diameter_category: medium
-        water_region: coastal
-        current_meter_status: none
-  output:
-    water_licences:
-      licence_holder_1:
-        metering_required: false
-        metering_compliance_status: "not_applicable"
-
-- name: >
-    Metering — Inland unregulated river, medium pump, old non-approved meter.
-    Must upgrade meter by 2026.
-  period: 2024
-  input:
-    water_licences:
-      licence_holder_1:
-        licence_type: surface_water
-        pump_diameter_category: medium
-        water_region: inland_unregulated
-        current_meter_status: non_approved
-  output:
-    water_licences:
-      licence_holder_1:
+        compliance_tier: tier_3_full_compliance
         metering_required: true
-        telemetry_required: false
+        telemetry_required: true
+        dqp_validation_required: true
+        compliance_deadline_year: 2024
+        metering_compliance_status: "lid_required"
+
+- name: >
+    Metering — Tier 3 high-risk pump (≥500mm). 500mm pump, entitlement only 30ML.
+    Pump diameter alone triggers Tier 3 regardless of entitlement.
+    Applies everywhere in NSW — deadline already passed (inland and coastal).
+  period: 2025
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_mm: 500.0
+        cumulative_entitlement_ml: 30.0
+        water_region: coastal
+        current_meter_status: none
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
+  output:
+    water_licences:
+      licence_holder_1:
+        compliance_tier: tier_3_full_compliance
+        metering_required: true
+        telemetry_required: true
+        dqp_validation_required: true
+        metering_compliance_status: "action_required"
+
+- name: >
+    Metering — Tier 3 (coastal). 150ML entitlement, 200mm pump, coastal region.
+    Full compliance required. Coastal deadline: 1 December 2026.
+    Old non-approved meter in place — must upgrade.
+  period: 2025
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_mm: 200.0
+        cumulative_entitlement_ml: 150.0
+        water_region: coastal
+        current_meter_status: non_approved
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
+  output:
+    water_licences:
+      licence_holder_1:
+        compliance_tier: tier_3_full_compliance
+        metering_required: true
+        telemetry_required: true
+        dqp_validation_required: true
         compliance_deadline_year: 2026
         metering_compliance_status: "upgrade_required"
 
 - name: >
-    Metering — Large pump on MDB groundwater, no meter.
-    Requires meter AND telemetry by 2025.
-  period: 2024
+    Metering — Tier 2. 60ML entitlement, 150mm pump, inland regulated river.
+    Pattern-approved meter required. DQP and telemetry optional.
+    Deadline: 1 December 2027.
+    No meter installed — action required.
+  period: 2025
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_mm: 150.0
+        cumulative_entitlement_ml: 60.0
+        water_region: inland_regulated
+        current_meter_status: none
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
+  output:
+    water_licences:
+      licence_holder_1:
+        compliance_tier: tier_2_meter_only
+        metering_required: true
+        telemetry_required: false
+        dqp_validation_required: false
+        compliance_deadline_year: 2027
+        metering_compliance_status: "action_required"
+
+- name: >
+    Metering — Tier 2, pattern-approved meter installed (no LID).
+    LID is optional at Tier 2 — meter alone satisfies the obligation.
+    Status: compliant.
+  period: 2025
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_mm: 150.0
+        cumulative_entitlement_ml: 60.0
+        water_region: inland_regulated
+        current_meter_status: pattern_approved_no_lid
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
+  output:
+    water_licences:
+      licence_holder_1:
+        compliance_tier: tier_2_meter_only
+        metering_required: true
+        telemetry_required: false
+        dqp_validation_required: false
+        compliance_deadline_year: 2027
+        metering_compliance_status: "compliant"
+
+- name: >
+    Metering — Exempt. Single surface water pump 80mm, entitlement 10ML.
+    Below both size threshold (<100mm) and volume threshold (≤15ML).
+    No meter required. Note: recording and reporting still mandatory.
+  period: 2025
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_mm: 80.0
+        cumulative_entitlement_ml: 10.0
+        water_region: coastal
+        current_meter_status: none
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
+  output:
+    water_licences:
+      licence_holder_1:
+        compliance_tier: exempt
+        metering_required: false
+        telemetry_required: false
+        dqp_validation_required: false
+        compliance_deadline_year: 0
+        metering_compliance_status: "exempt"
+
+- name: >
+    Metering — Low volume exemption overridden by trading allocations.
+    12ML entitlement (≤15ML) but licence holder is trading allocations.
+    Trading triggers mandatory metering despite low volume.
+  period: 2025
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_mm: 80.0
+        cumulative_entitlement_ml: 12.0
+        water_region: inland_regulated
+        current_meter_status: none
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: true
+  output:
+    water_licences:
+      licence_holder_1:
+        compliance_tier: tier_2_meter_only
+        metering_required: true
+        telemetry_required: false
+        metering_compliance_status: "action_required"
+
+- name: >
+    Metering — Groundwater licence, single bore 180mm, 8ML entitlement.
+    Below groundwater bore size threshold (<200mm) and volume threshold (≤15ML).
+    Exempt from metering.
+  period: 2025
   input:
     water_licences:
       licence_holder_1:
         licence_type: groundwater
-        pump_diameter_category: large
-        water_region: groundwater_mdb
+        pump_diameter_mm: 180.0
+        cumulative_entitlement_ml: 8.0
+        water_region: inland_unregulated
         current_meter_status: none
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
   output:
     water_licences:
       licence_holder_1:
-        metering_required: true
-        telemetry_required: true
-        compliance_deadline_year: 2025
-        metering_compliance_status: "action_required"
+        compliance_tier: exempt
+        metering_required: false
+        telemetry_required: false
+        dqp_validation_required: false
+        metering_compliance_status: "exempt"
+
+- name: >
+    Metering — Inactive works. Large pump, large entitlement, but work is inactive.
+    Inactive works are exempt from metering obligations under Schedule 7, Part 3.
+  period: 2025
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: surface_water
+        pump_diameter_mm: 300.0
+        cumulative_entitlement_ml: 200.0
+        water_region: inland_regulated
+        current_meter_status: none
+        work_status: inactive
+        is_single_work_on_property: true
+        is_trading_allocations: false
+  output:
+    water_licences:
+      licence_holder_1:
+        compliance_tier: not_applicable
+        metering_required: false
+        telemetry_required: false
+        dqp_validation_required: false
+        metering_compliance_status: "not_applicable"
+
+- name: >
+    Metering — No water access licence held.
+    Metering rules do not apply regardless of pump size or entitlement.
+  period: 2025
+  input:
+    water_licences:
+      licence_holder_1:
+        licence_type: none
+        pump_diameter_mm: 300.0
+        cumulative_entitlement_ml: 0.0
+        water_region: coastal
+        current_meter_status: none
+        work_status: active
+        is_single_work_on_property: true
+        is_trading_allocations: false
+  output:
+    water_licences:
+      licence_holder_1:
+        compliance_tier: not_applicable
+        metering_required: false
+        telemetry_required: false
+        dqp_validation_required: false
+        metering_compliance_status: "not_applicable"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
