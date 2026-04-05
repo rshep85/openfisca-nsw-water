@@ -348,7 +348,7 @@ class WaterDataDB:
             FROM gauge_readings r
             JOIN gauge_sites g ON r.site_id = g.site_id
             WHERE {' AND '.join(clauses)}
-            ORDER BY timestamp DESC
+            ORDER BY r.timestamp DESC
             LIMIT 1
         """, params)
 
