@@ -1,0 +1,4 @@
+
+# Data module
+data_module/data/db/*.db
+data_module/logs/
